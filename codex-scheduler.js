@@ -13,7 +13,7 @@ const CONFIG = {
     String.raw`C:\Users\USERNAME\AppData\Local\Programs\OpenAI\Codex\bin\codex.exe`,
   projectPath: process.env.CODEX_PROJECT || String.raw`H:\codex limit`,
   model: "gpt-6-luna",
-  reasoningEffort: "light",
+  reasoningEffort: "low",
   prompt: "are you ready? answer with yes or no.",
   timezone: "Africa/Cairo", // Must match the timezone used by the CLI's reset message.
   timeoutMs: 30 * 60 * 1000,
@@ -371,6 +371,11 @@ async function main() {
     const wakeAt = Date.parse(state.pausedUntil) + 60_000;
     console.log(
       `Usage limit resets at ${formatReset(Date.parse(state.pausedUntil))}. Retrying at the exact reset time: ${formatReset(wakeAt)}.`,
+    );
+    notify(
+      `Codex usage limit reached. Expected reset: ${formatReset(
+        Date.parse(state.pausedUntil),
+      )}. The job will retry at that exact reset time.`,
     );
     await new Promise((resolve) =>
       setTimeout(resolve, Math.max(0, wakeAt - Date.now())),
