@@ -1,0 +1,40 @@
+name: Codex Limit Scheduler
+
+on:
+  schedule:
+    - cron: "7,37 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: codex-limit
+  cancel-in-progress: false
+
+jobs:
+  scheduler:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Codex CLI
+        run: npm install -g @openai/codex
+
+      - name: Write Codex auth
+        run: |
+          mkdir -p ~/.codex
+          printf '%s' '${{ secrets.CODEX_AUTH_JSON }}' > ~/.codex/auth.json
+          chmod 600 ~/.codex/auth.json
+
+      - name: Write .env
+        run: |
+          echo "CODEX_PATH=$(which codex)" >> .env
+          echo "CODEX_PROJECT=$GITHUB_WORKSPACE" >> .env
+          echo "TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }}" >> .env
+          echo "TELEGRAM_CHAT_ID=${{ secrets.TELEGRAM_CHAT_ID }}" >> .env
+
+      - name: Run scheduler
+        run: node --env-file=.env codex-scheduler.js
